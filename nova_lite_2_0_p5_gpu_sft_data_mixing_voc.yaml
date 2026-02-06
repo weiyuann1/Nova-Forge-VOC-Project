@@ -1,0 +1,61 @@
+run:
+  name: my-full-rank-sft-run
+  model_type: amazon.nova-2-lite-v1:0:256k
+  model_name_or_path: nova-lite-2/prod
+  data_s3_path: s3://my-bucket-name/train.jsonl  # SageMaker Hyperpod (SMHP) only and not compatible with SageMaker Training jobs. Note replace my-bucket-name with your real bucket name for SMHP job
+  replicas: 4                      # Number of compute instances for training, allowed values are 4, 8, 16, 32
+  output_s3_path: s3://my-bucket-name/outputs/               # Output artifact path (Hyperpod job-specific; not compatible with standard SageMaker Training jobs). Note replace my-bucket-name with your real bucket name for SMHP job
+  mlflow_tracking_uri: "" # Required for MLFlow
+  mlflow_experiment_name: "my-full-rank-sft-experiment" # Optional for MLFlow. Note: leave this field non-empty
+  mlflow_run_name: "my-full-rank-sft-run" # Optional for MLFlow. Note: leave this field non-empty
+
+training_config:
+  max_steps: 500                   # Maximum training steps. Minimal is 4.
+  save_steps: ${oc.select:training_config.max_steps}                 # How many training steps the checkpoint will be saved. Should be less than or equal to max_steps
+  save_top_k: 1                    # Keep top K best checkpoints. Note supported only for SageMaker HyperPod jobs. Minimal is 1.
+  max_length: 32768                # Sequence length (options: 8192, 16384, 32768 [default], 65536)
+  global_batch_size: 32            # Golbal batch size (options: 32, 64, 128)
+  reasoning_enabled: true          # If data has reasoningContent, set to true; otherwise False
+
+  lr_scheduler:
+    warmup_steps: 15               # Learning rate warmup steps. Recommend 15% of max_steps
+    min_lr: 1e-6                   # Minimum learning rate, must be between 0.0 and 1.0
+
+  optim_config:                    # Optimizer settings
+    lr: 1e-5                       # Learning rate, must be between 0.0 and 1.0
+    weight_decay: 0.0              # L2 regularization strength, must be between 0.0 and 1.0
+    adam_beta1: 0.9                # Exponential decay rate for first-moment estimates, must be between 0.0 and 1.0
+    adam_beta2: 0.95               # Exponential decay rate for second-moment estimates, must be between 0.0 and 1.0
+
+  peft:                            # Parameter-efficient fine-tuning (LoRA)
+    peft_scheme: "null"            # Disable LoRA for PEFT
+
+data_mixing:
+  dataset_catalog: sft_1p5_text_chat # Nova text dataset
+  sources:
+    customer_data:
+      percent: 75 # Percent of overall mix 
+    nova_data: # The remainder will be drawn
+      agents: 1 # autonomous decision-making,task completion, goal-oriented behavior in AI systems
+      baseline: 10 # [New in Nova 1.5]
+      chat: 0.5 # Conversational exchanges demonstrating natural dialogue flow
+      code: 10 # Programming examples and solutions spanning multiple languages
+      factuality: 0.1 # [New in Nova 1.5]
+      identity: 1 # [New in Nova 1.5]
+      long-context: 1 # [New in Nova 1.5]
+      math: 2 # [New in Nova 1.5]
+      rai: 1 # ethical AI principles, safety considerations, and responsible technology deployment
+      instruction-following: 13 # precise task execution based on varying levels of user prompts and directives
+      stem: 0.5 # Technical content covering science, technology, engineering, and mathematics
+      planning: 10 # Sequences demonstrating strategic thinking and step-by-step task breakdown
+      reasoning-chat: 0.5
+      reasoning-code: 0.5
+      reasoning-factuality: 0.5
+      reasoning-instruction-following: 45
+      reasoning-math: 0.5
+      reasoning-planning: 0.5
+      reasoning-rag: 0.4
+      reasoning-rai: 0.5
+      reasoning-stem: 0.4
+      rag: 1 # combining retrieved external knowledge with generated responses
+      translation: 0.1
