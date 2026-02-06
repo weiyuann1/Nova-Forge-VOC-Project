@@ -1,54 +1,54 @@
 # VOC-Nova-Forge
 
-这个文件夹包含了在Amazon SageMaker HyperPod上运行VOC (Voice of Customer) 分类任务所需的所有脚本和配置文件。
+This folder contains all scripts and configuration files required to run VOC (Voice of Customer) classification tasks on Amazon SageMaker HyperPod.
 
-## 文件说明
+## File Description
 
-### 1. 训练相关文件
+### 1. Training Files
 
 #### `nova_lite_2_0_p5_gpu_sft_data_mixing_voc.yaml`
-- **用途**: HyperPod SFT (Supervised Fine-Tuning) 训练配置文件，使用VOC数据混合
-- **关键配置**:
-  - 模型: `amazon.nova-2-lite-v1:0:256k`
-  - 实例数: 4个
-  - 训练步数: 500 
-  - 序列长度: 32768
-  - 全局批次大小: 32
-  - 数据混合比例: 75% 客户数据 + 25% Nova数据
-- **数据混合策略**:
+- **Purpose**: HyperPod SFT (Supervised Fine-Tuning) training configuration file with VOC data mixing
+- **Key Configuration**:
+  - Model: `amazon.nova-2-lite-v1:0:256k`
+  - Instance count: 4
+  - Training steps: 500
+  - Sequence length: 32768
+  - Global batch size: 32
+  - Data mixing ratio: 75% customer data + 25% Nova data
+- **Data Mixing Strategy**:
   - customer_data: 75%
-  - nova_data包含多个类别: agents, baseline, chat, code, reasoning等
+  - nova_data includes multiple categories: agents, baseline, chat, code, reasoning, etc.
 
 #### `example.jsonl`
-- **用途**: VOC训练数据集 (Bedrock格式)
-- **格式**: JSONL格式，每行一个训练样本
-- **内容**: 用户评论的多级分类标注数据 (L1-L4层级)
+- **Purpose**: VOC training dataset (Bedrock format)
+- **Format**: JSONL format, one training sample per line
+- **Content**: Multi-level classification annotations for user comments (L1-L4 hierarchy)
 
-### 2. 评估相关文件
+### 2. Evaluation Files
 #### `nova_lite_2_0_p5_48xl_gpu_bring_your_own_dataset_eval.yaml`
-- **用途**: HyperPod评估任务配置文件
-- **关键配置**:
-  - 模型: `amazon.nova-2-lite-v1:0:256k`
-  - 实例数: 1
-  - 评估任务: gen_qa
-  - 推理参数: max_new_tokens=8196, temperature=0
+- **Purpose**: HyperPod evaluation task configuration file
+- **Key Configuration**:
+  - Model: `amazon.nova-2-lite-v1:0:256k`
+  - Instance count: 1
+  - Evaluation task: gen_qa
+  - Inference parameters: max_new_tokens=8196, temperature=0
 
 #### `evaluate_voc.py`
-- **用途**: VOC分类结果评估脚本
-- **功能**:
-  - 解析推理输出的JSON格式
-  - 提取E1-E4四个层级的分类标签
-  - 计算Precision, Recall, F1-Score指标
-  - 生成Excel格式的详细对比结果
-  - 输出JSON格式的评估结果
-- **输入**: inference_output.jsonl (推理结果文件)
-- **输出**: 
-  - evaluation_final.xlsx (详细对比表格)
-  - evaluation_results.json (评估指标)
+- **Purpose**: VOC classification result evaluation script
+- **Features**:
+  - Parse inference output in JSON format
+  - Extract classification labels for E1-E4 hierarchy levels
+  - Calculate Precision, Recall, F1-Score metrics
+  - Generate detailed comparison results in Excel format
+  - Output evaluation results in JSON format
+- **Input**: inference_output.jsonl (inference result file)
+- **Output**: 
+  - evaluation_final.xlsx (detailed comparison table)
+  - evaluation_results.json (evaluation metrics)
 
-## 使用流程
-### 1. 训练阶段
-使用HyperPod CLI启动训练任务:
+## Usage Workflow
+### 1. Training Phase
+Start training job using HyperPod CLI:
 
 ```bash
 hyperpod start-job \
@@ -92,9 +92,9 @@ hyperpod start-job \
 ```
 
 
-### 2. 推理阶段
+### 2. Inference Phase
 
-训练完成后，使用评估配置进行推理:
+After training completes, run inference using evaluation configuration:
 
 ```bash
 hyperpod start-job -n kubeflow \
@@ -109,20 +109,20 @@ hyperpod start-job -n kubeflow \
 }'
 ```
 
-### 3. 评估阶段
+### 3. Evaluation Phase
 
-推理完成后，运行评估脚本:
+After inference completes, run evaluation script:
 
 ```bash
-# 使用evaluate_voc.py评估
+# Evaluate using evaluate_voc.py
 python evaluate_voc.py <inference_output.jsonl> <output_dir>
 ```
 
-## 注意事项
+## Important Notes
 
-1. 训练数据需要上传到S3，并在配置文件中指定正确的路径
-2. 输出路径也需要配置为有效的S3路径
-3. 确保HyperPod集群有足够的资源 (p5.48xlarge实例)
-4. 评估脚本需要sklearn和pandas依赖库
-5. 推理输出格式必须是JSONL，每行包含gold和inference字段
+1. Training data must be uploaded to S3 and the correct path specified in the configuration file
+2. Output path must also be configured as a valid S3 path
+3. Ensure HyperPod cluster has sufficient resources (p5.48xlarge instances)
+4. Evaluation script requires sklearn and pandas dependencies
+5. Inference output format must be JSONL, with each line containing gold and inference fields
 
