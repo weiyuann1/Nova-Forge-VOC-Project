@@ -19,7 +19,7 @@
   - customer_data: 75%
   - nova_data包含多个类别: agents, baseline, chat, code, reasoning等
 
-#### `train_bedrock_in_domin.jsonl`
+#### `example.jsonl`
 - **用途**: VOC训练数据集 (Bedrock格式)
 - **格式**: JSONL格式，每行一个训练样本
 - **内容**: 用户评论的多级分类标注数据 (L1-L4层级)
